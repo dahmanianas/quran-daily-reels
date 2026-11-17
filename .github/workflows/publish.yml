@@ -1,0 +1,30 @@
+name: Publish daily Quran Reel
+
+on:
+  schedule:
+    - cron: "5 8 * * *"
+      timezone: "Europe/Berlin"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish next Reel
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          VIDEO_BASE_URL: ${{ vars.VIDEO_BASE_URL }}
+        run: node scripts/publish.mjs
+      - name: Save confirmed progress
+        run: |
+          git config user.name "quran-reels-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          git diff --cached --quiet || git commit -m "Record published Quran page"
+          git push
